@@ -1,5 +1,4 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ba7973a539c94e36bbd39e8f88f3573d)](https://www.codacy.com/app/rodoherty1/RabbitConsumer?utm_source=github.com&utm_medium=referral&utm_content=PaddyPowerBetfair/RabbitConsumer&utm_campaign=badger)
-# Rabbit Consumer [![Build Status](https://travis-ci.org/PaddyPowerBetfair/RabbitConsumer.svg?branch=master)](https://travis-ci.org/PaddyPowerBetfair/RabbitConsumer)
+# Rabbit Consumer [![Build Status](https://travis-ci.org/PaddyPowerBetfair/RabbitConsumer.svg?branch=master)](https://travis-ci.org/PaddyPowerBetfair/RabbitConsumer) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ba7973a539c94e36bbd39e8f88f3573d)](https://www.codacy.com/app/rodoherty1/RabbitConsumer?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=PaddyPowerBetfair/RabbitConsumer&amp;utm_campaign=Badge_Grade) [![Coverage Status](https://coveralls.io/repos/github/PaddyPowerBetfair/RabbitConsumer/badge.svg)](https://coveralls.io/github/PaddyPowerBetfair/RabbitConsumer)
 
 ## What does it do?
 
