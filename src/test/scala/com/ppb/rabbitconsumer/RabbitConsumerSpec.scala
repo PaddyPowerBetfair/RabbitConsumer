@@ -1,7 +1,6 @@
 package com.ppb.rabbitconsumer
 
-import org.scalatest.FunSuite
-import org.scalatest.BeforeAndAfter
+import org.scalatest.{FunSuite, BeforeAndAfter}
 import org.slf4j.LoggerFactory
 
 
