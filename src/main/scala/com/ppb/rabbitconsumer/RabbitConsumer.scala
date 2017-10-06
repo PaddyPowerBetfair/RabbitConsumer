@@ -6,12 +6,14 @@ import scala.collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable
 import scala.util.{Success, Try}
 import scalaz.concurrent.Task
 import scalaz.stream._
 
 case class Cxn(filename: String, nextMessage: () => Try[Json], disconnect: () => Try[Unit])
+
+case class Configurations(name: String, config: List[Config])
+
 
 object RabbitConsumer {
   val jsonPreamble = "{\n    \"all\": ["
@@ -19,7 +21,7 @@ object RabbitConsumer {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
-  def local(): Unit = all("local")
+  def local(): Unit = read("local")
 
   def done(configName: String): Unit = {
     val connections = ConfigFactory.load(configName).getConfigList("amqp.connections").asScala
@@ -33,21 +35,24 @@ object RabbitConsumer {
     }
   }
 
-  def all(configName: String): Unit = {
-    val connections: immutable.Seq[Config] = ConfigFactory.load(configName).getConfigList("amqp.connections").asScala.toList
+  def getConfigs(configName: String): Configurations = {
+    val configs = ConfigFactory.load(configName).getConfigList("amqp.connections").asScala.toList
+    Configurations(configName, configs)
+  }
 
-    val cxns = connections.map(ConnectionService.init)
+  val read = getConfigs _ andThen all
 
-    cxns foreach { cxn => {
+  private def all(c: Configurations): Unit = {
+    c.config.map(ConnectionService.init) foreach { cxn => {
       getMessages(cxn).run.run
       cxn.disconnect()
     }
     }
 
-    logger.info(s"Done receiving $configName messages")
+    logger.info(s"Done receiving ${c.name} messages")
 
-    logger.info(s"""When you're done testing, run "R.done("$configName") to delete the following Rabbit queues:""")
-    connections.foreach { config =>
+    logger.info(s"""When you're done testing, run "R.done("${c.name}") to delete the following Rabbit queues:""")
+    c.config.foreach { config =>
       logger.info(s"- ${config.getString("queue")}")
     }
   }
