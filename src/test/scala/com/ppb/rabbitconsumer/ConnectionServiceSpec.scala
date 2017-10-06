@@ -17,7 +17,7 @@ class ConnectionServiceSpec extends FlatSpec    {
     assert(connectionFactory.getPort == cfg.getInt("port"), " PORT do not match")
     assert(connectionFactory.getUsername == cfg.getString("user"), " USER do not match")
     assert(connectionFactory.getPassword == cfg.getString("password") , " PASSWORD do not match")
-    assert(connectionFactory.isSSL == cfg.getBoolean("useSSL"), " SSL in connection factory and Config do not match")
+    assert(connectionFactory.isSSL == cfg.getBoolean("useSSL"), " SSL in connection factory and Config do not match!")
     }
 
   }
