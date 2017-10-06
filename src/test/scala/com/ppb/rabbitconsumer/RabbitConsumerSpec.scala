@@ -1,26 +1,34 @@
 package com.ppb.rabbitconsumer
 
-import org.scalatest.{FunSuite, BeforeAndAfter}
+import argonaut._
+import Argonaut._
+import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 
+import scala.util.{Failure, Success, Try}
 
-class RabbitConsumerSpec extends FunSuite with BeforeAndAfter {
+class RabbitConsumerSpec extends FlatSpec with Matchers {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
-  before {
-    logger.info(" Inside Before ")
+
+  behavior of "RabbitConsumer"
+
+  it should "receive all messages" in new RabbitConsumerFixture {
+    val message = RabbitConsumer.receiveAll(receiveOneMessage).toSource.runLog.run
+    message should have size 1
   }
+}
 
-  after {
-    logger.info(" Inside Before ")
-  }
+trait RabbitConsumerFixture {
 
+  var times = 0
 
-  test("Rabbit Consumer") {
-    logger.error(" Rebbit Consumer Not Yet Implemented ")
-
-  }
-
-
+  val receiveOneMessage: () => Try[Json] = () =>
+    if (times == 0) {
+      times = 1
+      Success("".asJson)
+    } else {
+      Failure(new Exception())
+    }
 }

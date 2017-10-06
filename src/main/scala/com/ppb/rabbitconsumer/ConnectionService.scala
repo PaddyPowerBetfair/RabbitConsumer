@@ -1,10 +1,12 @@
 package com.ppb.rabbitconsumer
 
-import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.{ConnectionFactory, GetResponse}
 import com.typesafe.config.Config
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.collection.JavaConverters._
+import argonaut._
+import Argonaut._
 
 object ConnectionService {
 
@@ -35,13 +37,24 @@ object ConnectionService {
     channel.queueDeclare(queueName, true, false, false, Map.empty[String, AnyRef].asJava).getQueue
     channel.queueBind(queueName, exchange, routingKey)
 
-    Cxn(connection, channel, queueName)
-  }
-
-  def close(cxn: Cxn): Try[Unit] = {
-    for {
-      _ <- Try(cxn.channel.close())
-      _ <- Try(cxn.connection.close())
+    val disconnect: () => Try[Unit] = () => for {
+      _ <- Try(channel.close())
+      _ <- Try(connection.close())
     } yield ()
+
+    val nextMessage: () => Try[Json] = () => {
+      val response: Try[GetResponse] = Try(channel.basicGet(queueName, false))
+
+      response flatMap { res =>
+        new String(res.getBody, "UTF-8").parse match {
+          case Right(json) => Success(json)
+          case Left(error) => Failure(throw new IllegalStateException(error))
+        }
+      }
+    }
+
+    val filename: String = config.getString("fileName").replaceFirst("^~", System.getProperty("user.home"))
+
+    Cxn(filename, nextMessage, disconnect)
   }
 }
