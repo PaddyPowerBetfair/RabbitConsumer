@@ -11,12 +11,17 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
-
   behavior of "RabbitConsumer"
 
   it should "receive all messages" in new RabbitConsumerFixture {
     val message = RabbitConsumer.receiveAll(receiveOneMessage).toSource.runLog.run
     message should have size 1
+  }
+
+  it should "read configuration files" in {
+    val config: Configurations = RabbitConsumer.getConfigs("local")
+    config.name should be ("local")
+    config.config should have size 2
   }
 }
 
