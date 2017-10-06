@@ -6,9 +6,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
-import scalaz.concurrent.Task
-
-
 
 class RabbitConsumerSpec extends FlatSpec with Matchers {
 
