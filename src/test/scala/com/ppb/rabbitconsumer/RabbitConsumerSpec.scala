@@ -11,7 +11,6 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
-
   behavior of "RabbitConsumer"
 
   it should "receive all messages" in new RabbitConsumerFixture {
