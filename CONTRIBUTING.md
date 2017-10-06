@@ -9,23 +9,14 @@ Fork, then clone the repo:
 
     git clone git@github.com:your-username/PaddyPowerBetfair/RabbitConsumer.git
 
-
-
 Push to your fork and [submit a pull request][pr].
 
-[pr]: https://github.com/PaddyPowerBetfair/RabbitConsumer.git/compare/
+[pr]: https://github.com/PaddyPowerBetfair/RabbitConsumer/compare/
 
-Assign the pull requests to 
+Assign the pull requests to the ```PaddyPowerBetfair-Dev``` team.
 
-At this point you're waiting on us. We like to at least comment on pull requests
-within three business days (and, typically, one business day). We may suggest
-some changes or improvements or alternatives.
+At this point you're waiting on us and we'll do our best not to keep you waiting.
 
 Some things that will increase the chance that your pull request is accepted:
-
 * Write tests.
-* Follow our [style guide][style].
-* Write a [good commit message][commit].
-
-[style]: https://github.com/thoughtbot/guides/tree/master/style
-[commit]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+* Write a good commit message.
