@@ -38,17 +38,18 @@ object RabbitConsumer {
 
     val cxns = connections.map(ConnectionService.init)
 
-      cxns foreach { cxn => {
-        getMessages(cxn).run.run
-        cxn.disconnect()
-      }}
+    cxns foreach { cxn => {
+      getMessages(cxn).run.run
+      cxn.disconnect()
+    }
+    }
 
-      logger.info(s"Done receiving $configName messages")
+    logger.info(s"Done receiving $configName messages")
 
-      logger.info(s"""When you're done testing, run "R.done("$configName") to delete the following Rabbit queues:""")
-      connections.foreach { config =>
-        logger.info(s"- ${config.getString("queue")}")
-      }
+    logger.info(s"""When you're done testing, run "R.done("$configName") to delete the following Rabbit queues:""")
+    connections.foreach { config =>
+      logger.info(s"- ${config.getString("queue")}")
+    }
   }
 
   private def getMessages(cxn: Cxn): Process[Task, Unit] = {
@@ -57,7 +58,7 @@ object RabbitConsumer {
       Process(jsonPostamble) pipe text.utf8Encode to io.fileChunkW(cxn.filename)
   }
 
-  private def receiveAll(nextMessage: () => Try[Json]): Process0[Json] = {
+  def receiveAll(nextMessage: () => Try[Json]): Process0[Json] = {
     nextMessage() match {
       case Success(txt) => Process.emit(txt) ++ receiveAll(nextMessage)
       case _            => Process.halt
