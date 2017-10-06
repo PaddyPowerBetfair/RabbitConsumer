@@ -10,22 +10,22 @@ class ConnectionServiceSpec extends FlatSpec    {
 
   "Test Connection Service is " should "have IP,PORT,USERNAME,PASSWORD" in  new ConnectionServiceFixture {
 
-    val connectionFactory:ConnectionFactory = ConnectionService.connectionFactory(config);
-    assert(connectionFactory != null)
-    assert(connectionFactory.getHost == config.getString("ip"), " IP Address do not match")
-    assert(connectionFactory.getPort == config.getInt("port"), " PORT do not match")
-    assert(connectionFactory.getUsername == config.getString("user"), " USER do not match")
-    assert(connectionFactory.getPassword == config.getString("password") , " PASSWORD do not match")
-    assert(!connectionFactory.isSSL, " SSL Is Not Enabled")
+    config.foreach { cfg =>
+
+      val connectionFactory = ConnectionService.connectionFactory(cfg)
+    assert(connectionFactory.getHost == cfg.getString("ip"), " IP Address do not match")
+    assert(connectionFactory.getPort == cfg.getInt("port"), " PORT do not match")
+    assert(connectionFactory.getUsername == cfg.getString("user"), " USER do not match")
+    assert(connectionFactory.getPassword == cfg.getString("password") , " PASSWORD do not match")
+    assert(connectionFactory.isSSL == cfg.getBoolean("useSSL"), " SSL in connection factory and Config do not match")
+    }
 
   }
 }
 
 trait ConnectionServiceFixture {
 
-  val config:Config = {
+  val config = ConfigFactory.load("local").getConfigList("amqp.connections").asScala.toList
 
-    val connections: immutable.Seq[Config] = ConfigFactory.load("local").getConfigList("amqp.connections").asScala.toList
-    connections.head
-  }
+
 }
