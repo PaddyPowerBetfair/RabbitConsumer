@@ -13,7 +13,7 @@ Push to your fork and [submit a pull request][pr].
 
 [pr]: https://github.com/PaddyPowerBetfair/RabbitConsumer/compare/
 
-Assign the pull requests to the ```PaddyPowerBetfair-Devs``` team.
+Assign the pull requests to the ```ppb-developers```.
 
 At this point you're waiting on us and we'll do our best not to keep you waiting.
 
