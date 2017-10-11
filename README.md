@@ -39,10 +39,11 @@ When you are done, make sure you call ```R.done("myConf")``` to delete the queue
 ```
 $ sbt
 $ console
-$ R.local           // will read messages published to the Soccer UI Exchange and Soccer DM Exchange and write them to ~/scratch/dm-output and ~/scratch/ui-output.json
+$ R.local           
 $ R.read("myconf")
 $ R.done("myconf")
 $ R.done("local")
+```
 
 ## How can I contribute?
 Please see [CONTRIBUTING.md](https://github.com/PaddyPowerBetfair/RabbitConsumer/blob/master/CONTRIBUTING.md).
