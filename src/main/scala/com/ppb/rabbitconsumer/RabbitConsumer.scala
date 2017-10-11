@@ -7,12 +7,11 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Success, Try}
-import scalaz.concurrent.Task
 import scalaz.stream._
 
 case class Cxn(filename: String, nextMessage: () => Try[Json], disconnect: () => Try[Unit])
 
-case class Configurations(name: String, config: List[Config])
+case class Configurations(name: String, configs: List[Config])
 
 
 object RabbitConsumer {
@@ -40,11 +39,11 @@ object RabbitConsumer {
     Configurations(configName, configs)
   }
 
-  val read = getConfigs _ andThen all
+  val read: (String) => Unit = getConfigs _ andThen consumeMessages
 
-  private def all(c: Configurations): Unit = {
-    c.config.map(ConnectionService.init) foreach { cxn => {
-      getMessages(cxn).run.run
+  private def consumeMessages(c: Configurations): Unit = {
+    c.configs.map(ConnectionService.init) foreach { cxn => {
+      (getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)).run.run
       cxn.disconnect()
     }
     }
@@ -52,21 +51,20 @@ object RabbitConsumer {
     logger.info(s"Done receiving ${c.name} messages")
 
     logger.info(s"""When you're done testing, run "R.done("${c.name}") to delete the following Rabbit queues:""")
-    c.config.foreach { config =>
+    c.configs.foreach { config =>
       logger.info(s"- ${config.getString("queue")}")
     }
   }
 
-  private def getMessages(cxn: Cxn): Process[Task, Unit] = {
+  private def getMessages(nextMessage: () => Try[Json]): Process0[String] =
     Process(jsonPreamble) ++
-      (receiveAll(cxn.nextMessage) map (_.spaces2) intersperse ",") ++
-      Process(jsonPostamble) pipe text.utf8Encode to io.fileChunkW(cxn.filename)
-  }
+      (receiveAll(nextMessage) map (_.spaces2) intersperse ",") ++
+      Process(jsonPostamble)
 
-  def receiveAll(nextMessage: () => Try[Json]): Process0[Json] = {
+
+  def receiveAll(nextMessage: () => Try[Json]): Process0[Json] =
     nextMessage() match {
       case Success(txt) => Process.emit(txt) ++ receiveAll(nextMessage)
       case _            => Process.halt
     }
-  }
 }

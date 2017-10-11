@@ -21,7 +21,7 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
   it should "read configuration files" in {
     val config: Configurations = RabbitConsumer.getConfigs("local")
     config.name should be ("local")
-    config.config should have size 2
+    config.configs should have size 2
   }
 }
 
