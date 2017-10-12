@@ -22,17 +22,9 @@ object RabbitConsumer {
 
   def local(): Unit = read("local")
 
-  def done(configName: String): Unit = {
-    val connections = ConfigFactory.load(configName).getConfigList("amqp.connections").asScala
+  def done(configName: String): Unit =
+    getConfigs(configName).configs foreach ConnectionService.done
 
-    connections.foreach { config =>
-      val queueName    = config.getString("queue")
-      val connection = ConnectionService.connectionFactory(config).newConnection()
-      val channel    = connection.createChannel()
-      logger.info(s"Deleting $queueName from $configName")
-      channel.queueDelete(queueName)
-    }
-  }
 
   def getConfigs(configName: String): Configurations = {
     val configs = ConfigFactory.load(configName).getConfigList("amqp.connections").asScala.toList
