@@ -24,16 +24,16 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
     config.config should have size 2
   }
 
-//  it should "read docker configuration files" in {
-//    val config: Configurations = RabbitConsumer.getConfigs("docker-rabbit-server")
-//    config.name should be ("docker-rabbit-server")
-//    config.config should have size 2
-//  }
-
-
-  it should "read docker configuration files and process it" in {
-    RabbitConsumer.local();
+  it should "read docker configuration files" in {
+    val config: Configurations = RabbitConsumer.getConfigs("docker-rabbit-server")
+    config.name should be ("docker-rabbit-server")
+    config.config should have size 2
   }
+
+
+//  it should "read docker configuration files and process it" in {
+//    RabbitConsumer.local();
+//  }
 }
 
 trait RabbitConsumerFixture {
