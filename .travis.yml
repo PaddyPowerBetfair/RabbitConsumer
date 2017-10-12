@@ -14,4 +14,5 @@ services:
 
 before_install:
   - docker pull rabbitmq
-  - docker run -d --hostname my-rabbit-server --name my-rabbitmq rabbitmq
+  - docker run -d --hostname my-rabbit --name my-rabbit -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p4369:4369  -p 61613:61613 rabbitmq:3-management
+  - docker ps -a
