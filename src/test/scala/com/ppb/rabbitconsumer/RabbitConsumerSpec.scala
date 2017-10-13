@@ -5,8 +5,6 @@ import Argonaut._
 import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 
-import scala.util.{Failure, Success, Try}
-
 class RabbitConsumerSpec extends FlatSpec with Matchers {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
@@ -29,11 +27,11 @@ trait RabbitConsumerFixture {
 
   var times = 0
 
-  val receiveOneMessage: () => Try[Json] = () =>
+  val receiveOneMessage: () => RabbitResponse = () =>
     if (times == 0) {
       times = 1
-      Success("".asJson)
+      RabbitMessage("".asJson)
     } else {
-      Failure(new Exception())
+      NoMoreMessages
     }
 }

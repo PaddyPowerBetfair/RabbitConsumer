@@ -6,13 +6,12 @@ import scala.collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 
-import scala.util.{Success, Try}
+import scala.util.Try
 import scalaz.stream._
 
-case class Cxn(filename: String, nextMessage: () => Try[Json], disconnect: () => Try[Unit])
+case class Cxn(filename: String, nextMessage: () => RabbitResponse, disconnect: () => Try[Unit])
 
 case class Configurations(name: String, configs: List[Config])
-
 
 object RabbitConsumer {
   val jsonPreamble = "{\n    \"all\": ["
@@ -48,15 +47,15 @@ object RabbitConsumer {
     }
   }
 
-  private def getMessages(nextMessage: () => Try[Json]): Process0[String] =
+  private def getMessages(nextMessage: () => RabbitResponse): Process0[String] =
     Process(jsonPreamble) ++
       (receiveAll(nextMessage) map (_.spaces2) intersperse ",") ++
       Process(jsonPostamble)
 
 
-  def receiveAll(nextMessage: () => Try[Json]): Process0[Json] =
+  def receiveAll(nextMessage: () => RabbitResponse): Process0[Json] =
     nextMessage() match {
-      case Success(txt) => Process.emit(txt) ++ receiveAll(nextMessage)
-      case _            => Process.halt
+      case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage)
+      case NoMoreMessages      => Process.halt
     }
 }
