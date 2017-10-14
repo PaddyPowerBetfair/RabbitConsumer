@@ -30,8 +30,8 @@ object RabbitConnection {
 
   def nextPayload(queueName: String)(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
     val response = for {
-      message <- Try(rabbitConnection.channel.basicGet(queueName, false))
-      json <- asJson(message.getBody)
+      message <- Try(rabbitConnection.nextMessage())
+      json    <- asJson(message)
     } yield RabbitMessage(json)
 
     response match {
@@ -47,6 +47,6 @@ object RabbitConnection {
     }
 }
 
-case class RabbitConnection(connection: Connection, channel: Channel)
+case class RabbitConnection(connection: Connection, channel: Channel, nextMessage: () => Array[Byte])
 
 

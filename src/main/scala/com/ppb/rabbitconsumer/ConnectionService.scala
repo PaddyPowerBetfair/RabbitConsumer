@@ -33,7 +33,11 @@ object ConnectionService {
     val connection = connectionFactory(config).newConnection()
     val channel    = connection.createChannel()
 
-    RabbitConnection(connection, channel)
+    val nextMessage: () => Array[Byte] = () => {
+      channel.basicGet(readQueue(config), false).getBody
+    }
+
+    RabbitConnection(connection, channel, nextMessage)
   }
 
   def init(config: Config): Cxn = {
