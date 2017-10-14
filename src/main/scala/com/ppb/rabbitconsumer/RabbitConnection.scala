@@ -20,7 +20,7 @@ object RabbitConnection {
     rabbitConnection.channel.exchangeDeclarePassive(exchange)
 
   def createQueue(queueName: String)(implicit rabbitConnection: RabbitConnection): Unit =
-    rabbitConnection.channel.queueDeclare(queueName, true, false, false, Map.empty[String, AnyRef].asJava).getQueue
+    rabbitConnection.channel.queueDeclare(queueName, true, false, false, Map.empty[String, AnyRef].asJava)
 
   def bindQueueToExchange(queueName: String, exchange: String, routingKey: String)(implicit rabbitConnection: RabbitConnection): Unit =
     rabbitConnection.channel.queueBind(queueName, exchange, routingKey)
