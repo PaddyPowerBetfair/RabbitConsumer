@@ -7,6 +7,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.LoggerFactory
 
 import scala.util.Try
+import scalaz.concurrent.Task
 import scalaz.stream._
 
 case class Cxn(filename: String, nextMessage: () => RabbitResponse, disconnect: () => Try[Unit])
@@ -30,11 +31,14 @@ object RabbitConsumer {
     Configurations(configName, configs)
   }
 
-  val read: (String) => Unit = getConfigs _ andThen consumeMessages
+  val getMessagesPerConnection: Cxn => Process[Task, Unit] = cxn =>
+    getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)
 
-  private def consumeMessages(c: Configurations): Unit = {
-    c.configs.map(ConnectionService.init) foreach { cxn => {
-      (getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)).run.run
+  val read: (String) => Unit =  getConfigs _ andThen consumeMessages(ConnectionService.init, getMessagesPerConnection)
+
+  def consumeMessages(getCxn: Config => Cxn, getMessages: Cxn => Process[Task, Unit])(c: Configurations): Unit = {
+    c.configs.map(getCxn) foreach { cxn => {
+      getMessages(cxn).run.run
       cxn.disconnect()
     }
     }
