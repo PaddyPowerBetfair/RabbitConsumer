@@ -1,8 +1,12 @@
+import sbt._
+import Keys._
+import Tests._
+
 name := "Rabbit Consumer"
 
-version := "0.1"
+version := "0.13.16"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.3"
 
 val scalazV = "7.1.11"
 val scalazStreamV = "0.8.6"
@@ -31,7 +35,7 @@ val scalacheck = Seq(
 )
 
 val scalatest = Seq(
-  "org.scalatest" %% "scalatest" % scalatestV
+  "org.scalatest" %% "scalatest" % scalatestV 
 )
 
 val amqpClient = Seq(
@@ -43,7 +47,15 @@ val logging = Seq (
   "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
 
+lazy val IntegrationTest = config("it") extend(Test)
+
 libraryDependencies ++= logging ++ scalacheck ++ scalatest ++ amqpClient ++ scalaz ++ argonaut ++ typesafeConfig
+
+lazy val root = (project in file("."))
+.configs(IntegrationTest)
+.settings(
+   Defaults.itSettings
+  )
 
 initialCommands in console :=
   """

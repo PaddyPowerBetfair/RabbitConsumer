@@ -24,10 +24,7 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
     config.config should have size 2
   }
 
-  it should "read docker configuration files and process it" in {
-    RabbitConsumer.local
-  }
-}
+ }
 
 trait RabbitConsumerFixture {
 
