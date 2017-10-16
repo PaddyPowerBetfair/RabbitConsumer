@@ -12,6 +12,7 @@ val jodatimeV = "2.9.4"
 val amqpClientV = "3.5.3"
 val scalacheckV = "1.13.5"
 val scalatestV = "3.0.4"
+val mockitoV = "2.10.0"
 
 val typesafeConfig = Seq(
   "com.typesafe" % "config" % typesafeConfigV
@@ -43,7 +44,11 @@ val logging = Seq (
   "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
 
-libraryDependencies ++= logging ++ scalacheck ++ scalatest ++ amqpClient ++ scalaz ++ argonaut ++ typesafeConfig
+val mockito = Seq (
+  "org.mockito" % "mockito-core" % mockitoV % "test"
+)
+
+libraryDependencies ++= logging ++ scalacheck ++ scalatest ++ amqpClient ++ scalaz ++ argonaut ++ typesafeConfig ++ mockito
 
 initialCommands in console :=
   """
