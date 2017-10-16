@@ -1,14 +1,20 @@
 package com.ppb.rabbitconsumer
 
-import com.rabbitmq.client.{ConnectionFactory, GetResponse}
+import com.rabbitmq.client.ConnectionFactory
 import com.typesafe.config.Config
 
-import scala.util.{Failure, Success, Try}
-import scala.collection.JavaConverters._
 import argonaut._
-import Argonaut._
+import com.ppb.rabbitconsumer.ConfigService.{getFilename, readExchange, readQueue, readRoutingKey}
+import com.ppb.rabbitconsumer.RabbitConnection._
+import org.slf4j.LoggerFactory
+
+sealed trait RabbitResponse extends Product with Serializable
+case object NoMoreMessages extends RabbitResponse
+case class RabbitMessage(payload: Json) extends RabbitResponse
 
 object ConnectionService {
+
+  private val logger = LoggerFactory.getLogger(ConnectionService.getClass)
 
   def connectionFactory(config: Config): ConnectionFactory = {
     val cxnFactory = new ConnectionFactory()
@@ -23,38 +29,33 @@ object ConnectionService {
     cxnFactory
   }
 
-
-  def init(config: Config): Cxn = {
-    val exchange     = config.getString("exchangeName")
-    val queueName    = config.getString("queue")
-    val routingKey   = config.getString("routingKey")
-
+  def rabbitConnection(config: Config): RabbitConnection = {
     val connection = connectionFactory(config).newConnection()
     val channel    = connection.createChannel()
 
-    channel.exchangeDeclarePassive(exchange)
-
-    channel.queueDeclare(queueName, true, false, false, Map.empty[String, AnyRef].asJava).getQueue
-    channel.queueBind(queueName, exchange, routingKey)
-
-    val disconnect: () => Try[Unit] = () => for {
-      _ <- Try(channel.close())
-      _ <- Try(connection.close())
-    } yield ()
-
-    val nextMessage: () => Try[Json] = () => {
-      val response: Try[GetResponse] = Try(channel.basicGet(queueName, false))
-
-      response flatMap { res =>
-        new String(res.getBody, "UTF-8").parse match {
-          case Right(json) => Success(json)
-          case Left(error) => Failure(throw new IllegalStateException(error))
-        }
-      }
+    val nextMessage: () => Array[Byte] = () => {
+      channel.basicGet(readQueue(config), false).getBody
     }
 
-    val filename: String = config.getString("fileName").replaceFirst("^~", System.getProperty("user.home"))
+    RabbitConnection(connection, channel, nextMessage)
+  }
 
-    Cxn(filename, nextMessage, disconnect)
+  def init(config: Config): Cxn = {
+    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
+
+    val queueName = readQueue(config)
+    val exchangeName = readExchange(config)
+    val routingKey = readRoutingKey(config)
+
+    createQueue(queueName)
+    bindQueueToExchange(queueName, exchangeName, routingKey)
+
+    Cxn(getFilename(config), () => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
+  }
+
+  def done(config: Config): Unit = {
+    val queueName = readQueue(config)
+    logger.info(s"Deleting $queueName")
+    deleteQueue(queueName)(rabbitConnection(config))
   }
 }

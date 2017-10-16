@@ -2,12 +2,19 @@ package com.ppb.rabbitconsumer
 
 import argonaut._
 import Argonaut._
+import com.typesafe.config.Config
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 import org.slf4j.LoggerFactory
 
-import scala.util.{Failure, Success, Try}
+import scalaz.concurrent.Task
+import scalaz.stream.Process
+import org.mockito.Mockito._
 
-class RabbitConsumerSpec extends FlatSpec with Matchers {
+import scala.util.Success
+
+
+class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
 
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
@@ -21,7 +28,29 @@ class RabbitConsumerSpec extends FlatSpec with Matchers {
   it should "read configuration files" in {
     val config: Configurations = RabbitConsumer.getConfigs("local")
     config.name should be ("local")
-    config.config should have size 2
+    config.configs should have size 2
+  }
+
+  it should "consume messages" in {
+
+    trait MyMock {
+      def iWasCalled(): Unit
+      def soWasI(): Unit
+    }
+
+    val myMock = mock[MyMock]
+    val getCxn: Config => Cxn = _ => Cxn("", () => NoMoreMessages, () => { myMock.soWasI(); Success(()) })
+
+    val getMessages: Cxn => Process[Task, Unit] = _ => {
+      myMock.iWasCalled()
+      Process(()).toSource
+    }
+
+    val configs: Configurations = RabbitConsumer.getConfigs("local")
+    RabbitConsumer.consumeMessages(getCxn, getMessages)(configs)
+
+    verify(myMock, times(2)).iWasCalled()
+    verify(myMock, times(2)).soWasI()
   }
 
  }
@@ -30,11 +59,11 @@ trait RabbitConsumerFixture {
 
   var times = 0
 
-  val receiveOneMessage: () => Try[Json] = () =>
+  val receiveOneMessage: () => RabbitResponse = () =>
     if (times == 0) {
       times = 1
-      Success("".asJson)
+      RabbitMessage("".asJson)
     } else {
-      Failure(new Exception())
+      NoMoreMessages
     }
 }

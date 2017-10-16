@@ -14,7 +14,7 @@ class RabbitConsumerITSpec extends FlatSpec with Matchers {
   private val logger = LoggerFactory.getLogger(RabbitConsumer.getClass)
 
   it should "read docker local configuration files and process it" in {
-    val filename: String = (RabbitConsumer.getConfigs("local")).config(1).getString("fileName").replaceFirst("^~", System.getProperty("user.home"))
+    val filename: String = (RabbitConsumer.getConfigs("local")).configs(1).getString("fileName").replaceFirst("^~", System.getProperty("user.home"))
     RabbitConsumer.local
     for (line <- Source.fromFile(filename).getLines) {
           logger.info(line)
