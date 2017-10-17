@@ -62,4 +62,4 @@ object RabbitConsumer {
       case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage(iteration), iteration + 1)
       case NoMoreMessages      => Process.halt
     }
-}
+} 
