@@ -2,8 +2,7 @@ language: scala
 scala:
     - 2.12.2
 script:
-    - sbt clean coverage test
-    - sbt it:clean it:test
+    - sbt clean coverage test it:test
     - sbt coverageReport
 after_success:
     - sbt coveralls
