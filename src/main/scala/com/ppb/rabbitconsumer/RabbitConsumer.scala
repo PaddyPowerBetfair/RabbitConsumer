@@ -51,7 +51,7 @@ object RabbitConsumer {
     }
   }
 
-  private def getMessages(nextMessage: (Int) => RabbitResponse, iteration: Int): Process0[String] =
+  private def getMessages(nextMessage: (Int) => RabbitResponse): Process0[String] =
     Process(jsonPreamble) ++
       (receiveAll(nextMessage) map (_.spaces2) intersperse ",") ++
       Process(jsonPostamble)
@@ -59,7 +59,7 @@ object RabbitConsumer {
 
   def receiveAll(nextMessage: (Int) => RabbitResponse, iteration: Int = 1): Process0[Json] =
     nextMessage(iteration) match {
-      case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage, iteration + 1)
+      case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage(iteration), iteration + 1)
       case NoMoreMessages      => Process.halt
     }
 }
