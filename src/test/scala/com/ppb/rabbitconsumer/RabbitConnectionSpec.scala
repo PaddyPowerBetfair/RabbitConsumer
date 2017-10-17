@@ -18,7 +18,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "create an exchange on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
+    val nextMessage = (Int) => Array.empty[Byte]
 
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
     RabbitConnection.createExchange("exchange")(rabbitConnection)
@@ -29,7 +29,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "create a queue on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
+    val nextMessage = (Int) => Array.empty[Byte]
 
     when(channel.queueDeclare("queue", true, false, false, Map.empty[String, AnyRef].asJava)).thenReturn(mock[DeclareOk])
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
@@ -39,7 +39,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "bind a queue to an exchange on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
+    val nextMessage = (Int) => Array.empty[Byte]
 
     when(channel.queueBind("queue", "exchange", "routingKey")).thenReturn(mock[BindOk])
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
@@ -49,7 +49,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "delete a queue on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
+    val nextMessage = (Int) => Array.empty[Byte]
 
     when(channel.queueDelete("queue")).thenReturn(mock[DeleteOk])
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
@@ -70,9 +70,9 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "disconnect from RabbitMQ Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
+    val nextMessage = (Int) => Array.empty[Byte]
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel, nextMessage(1))
     RabbitConnection.disconnect(rabbitConnection) should be (Success(()))
 
     verify(channel, times(1)).close()
@@ -83,9 +83,9 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
     val connection = mock[Connection]
     val channel = mock[Channel]
 
-    val nextMessage = () => """{ "key": "value" }""".getBytes
+    val nextMessage = (Int) => """{ "key": "value" }""".getBytes
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel, nextMessage(1))
 
     val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
     message shouldBe a[RabbitMessage]
@@ -95,9 +95,9 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
     val connection = mock[Connection]
     val channel = mock[Channel]
 
-    val nextMessage = () => throw new IllegalStateException("No more messages")
+    val nextMessage = (Int) => throw new IllegalStateException("No more messages")
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel, nextMessage(1))
 
     val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
     message shouldBe NoMoreMessages

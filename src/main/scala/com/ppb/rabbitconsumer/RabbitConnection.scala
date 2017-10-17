@@ -28,7 +28,7 @@ object RabbitConnection {
   def deleteQueue(queueName: String)(implicit rabbitConnection: RabbitConnection): Unit =
     rabbitConnection.channel.queueDelete(queueName)
 
-  def nextPayload(queueName: String)(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
+  def nextPayload(queueName: String, iteration: Int = 1)(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
     val response = for {
       message <- Try(rabbitConnection.nextMessage())
       json    <- asJson(message)
@@ -47,6 +47,6 @@ object RabbitConnection {
     }
 }
 
-case class RabbitConnection(connection: Connection, channel: Channel, nextMessage: () => Array[Byte])
+case class RabbitConnection(connection: Connection, channel: Channel, nextMessage: (Int) => Array[Byte])
 
 

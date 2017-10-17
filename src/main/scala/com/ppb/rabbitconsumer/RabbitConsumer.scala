@@ -10,7 +10,7 @@ import scala.util.Try
 import scalaz.concurrent.Task
 import scalaz.stream._
 
-case class Cxn(filename: String, nextMessage: () => RabbitResponse, disconnect: () => Try[Unit])
+case class Cxn(filename: String, nextMessage: (Int) => RabbitResponse, disconnect: () => Try[Unit])
 
 case class Configurations(name: String, configs: List[Config])
 
@@ -51,15 +51,15 @@ object RabbitConsumer {
     }
   }
 
-  private def getMessages(nextMessage: () => RabbitResponse): Process0[String] =
+  private def getMessages(nextMessage: (Int) => RabbitResponse, iteration: Int): Process0[String] =
     Process(jsonPreamble) ++
       (receiveAll(nextMessage) map (_.spaces2) intersperse ",") ++
       Process(jsonPostamble)
 
 
-  def receiveAll(nextMessage: () => RabbitResponse): Process0[Json] =
-    nextMessage() match {
-      case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage)
+  def receiveAll(nextMessage: (Int) => RabbitResponse, iteration: Int = 1): Process0[Json] =
+    nextMessage(iteration) match {
+      case RabbitMessage(json) => Process.emit(json) ++ receiveAll(nextMessage, iteration + 1)
       case NoMoreMessages      => Process.halt
     }
 }

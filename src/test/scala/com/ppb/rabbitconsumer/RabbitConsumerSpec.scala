@@ -21,7 +21,7 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
   behavior of "RabbitConsumer"
 
   it should "receive all messages" in new RabbitConsumerFixture {
-    val message = RabbitConsumer.receiveAll(receiveOneMessage).toSource.runLog.run
+    val message = RabbitConsumer.receiveAll(receiveOneMessage(1)).toSource.runLog.run
     message should have size 1
   }
 
@@ -55,12 +55,8 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
 }
 
 trait RabbitConsumerFixture {
-
-  var times = 0
-
-  val receiveOneMessage: () => RabbitResponse = () =>
-    if (times == 0) {
-      times = 1
+  val receiveOneMessage: (Int) => RabbitResponse = (iteration) =>
+    if (iteration == 1) {
       RabbitMessage("".asJson)
     } else {
       NoMoreMessages

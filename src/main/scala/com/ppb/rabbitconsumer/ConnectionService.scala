@@ -33,7 +33,7 @@ object ConnectionService {
     val connection = connectionFactory(config).newConnection()
     val channel    = connection.createChannel()
 
-    val nextMessage: () => Array[Byte] = () => {
+    val nextMessage: (Int) => Array[Byte] = (iteration) => {
       channel.basicGet(readQueue(config), false).getBody
     }
 
@@ -50,7 +50,7 @@ object ConnectionService {
     createQueue(queueName)
     bindQueueToExchange(queueName, exchangeName, routingKey)
 
-    Cxn(getFilename(config), () => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
+    Cxn(getFilename(config), (Int) => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
   }
 
   def done(config: Config): Unit = {
