@@ -32,7 +32,7 @@ object RabbitConsumer {
   }
 
   val getMessagesPerConnection: Cxn => Process[Task, Unit] = cxn =>
-    getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)
+    getMessages(cxn.nextMessage(1)).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)
 
   val read: (String) => Unit =  getConfigs _ andThen consumeMessages(ConnectionService.init, getMessagesPerConnection)
 

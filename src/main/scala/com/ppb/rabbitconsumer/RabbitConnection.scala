@@ -30,7 +30,7 @@ object RabbitConnection {
 
   def nextPayload(queueName: String, iteration: Int = 1)(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
     val response = for {
-      message <- Try(rabbitConnection.nextMessage())
+      message <- Try(rabbitConnection.nextMessage(iteration))
       json    <- asJson(message)
     } yield RabbitMessage(json)
 
