@@ -14,5 +14,5 @@ services:
   - docker
 
 before_install:
-  - docker run -d --hostname my-rabbit --name my-rabbit -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 rabbitmq:3-management
-  - docker ps -a
+  - docker build -t ppb-rabbit -f docker/
+  - docker run -d --hostname my-rabbit --name my-rabbit -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 ppb-rabbitmq
