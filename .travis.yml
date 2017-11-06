@@ -11,8 +11,8 @@ after_success:
 sudo: required
 
 services:
-  - docker
+   - docker
 
 before_install:
-	- docker build -t ppb-rabbitmq -f docker/Dockerfile . 
-	- docker run -d --hostname ppb-rabbit-server --name ppb-rabbitmq -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 ppb-rabbitmq
+   - docker build -t ppb-rabbitmq -f docker/Dockerfile docker 
+   - docker run -d --hostname ppb-rabbit-server --name ppb-rabbitmq -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 ppb-rabbitmq
