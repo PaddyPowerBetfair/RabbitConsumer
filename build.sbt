@@ -4,7 +4,7 @@ import Tests._
 
 name := "Rabbit Consumer"
 
-version := "0.13.16"
+version := "0.1"
 
 scalaVersion := "2.12.3"
 
