@@ -35,6 +35,7 @@ When you call```R.read("myConf")``` (for example), a queue is bound to the speci
 
 When you are done, make sure you call ```R.done("myConf")``` to delete the queues which were bound to the Exchange.
 
+
 ### Usage
 ```
 $ sbt
@@ -44,6 +45,37 @@ $ R.read("myconf")
 $ R.done("myconf")
 $ R.done("local")
 ```
+### Integration Test Support
+
+Place the Integration Test files files to src/it/scala folder. 
+The test resource file can be provided in src/it/resource folder.
+Place any test resources to src/it/resources folder.
+
+In this example to pass the integration test Rabbitmq server should be running on default ports. 
+Alternatively, docker instance can be started using following docker image:
+```
+docker run -d --hostname my-rabbit --name my-rabbit -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 rabbitmq:3-management
+```
+### Usage
+```
+$ sbt
+$ console
+$ it:test
+```
+### Adding Docker support to Travis
+
+If docker support is needed in Travis Continous Integration update the .travis.yml file
+```
+services:
+  - docker
+ ```
+ To start Docker Container in Travis Continous Integration 
+ ```
+ before_install:
+  - docker run -d --hostname my-rabbit --name my-rabbit -p 15671-15672:15671-15672/tcp -p 5671-5672:5671-5672/tcp -p 61613:61613 rabbitmq:3-management
+  - docker ps -a
+ ```
+  
 
 ## How can I contribute?
 Please see [CONTRIBUTING.md](https://github.com/PaddyPowerBetfair/RabbitConsumer/blob/master/CONTRIBUTING.md).

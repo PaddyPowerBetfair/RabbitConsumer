@@ -52,7 +52,8 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
     verify(myMock, times(2)).iWasCalled()
     verify(myMock, times(2)).soWasI()
   }
-}
+
+ }
 
 trait RabbitConsumerFixture {
 

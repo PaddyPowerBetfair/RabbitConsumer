@@ -24,8 +24,5 @@ class ConnectionServiceSpec extends FlatSpec    {
 }
 
 trait ConnectionServiceFixture {
-
   val config = ConfigFactory.load("local").getConfigList("amqp.connections").asScala.toList
-
-
 }
