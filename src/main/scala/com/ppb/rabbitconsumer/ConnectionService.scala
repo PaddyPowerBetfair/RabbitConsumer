@@ -1,16 +1,22 @@
 package com.ppb.rabbitconsumer
 
-import com.rabbitmq.client.ConnectionFactory
-import com.typesafe.config.Config
+import java.io.IOException
 
+import com.rabbitmq.client.{AMQP, ConnectionFactory, Envelope}
+import com.typesafe.config.Config
 import argonaut._
 import com.ppb.rabbitconsumer.ConfigService.{getFilename, readExchange, readQueue, readRoutingKey}
 import com.ppb.rabbitconsumer.RabbitConnection._
 import org.slf4j.LoggerFactory
 
+
 sealed trait RabbitResponse extends Product with Serializable
 case object NoMoreMessages extends RabbitResponse
-case class RabbitMessage(payload: Json) extends RabbitResponse
+case class RabbitJsonMessage(payload: Json) extends RabbitResponse
+case class RabbitPlainMessage(plainPayload: String) extends RabbitResponse
+case class RabbitMessage(rabbitResponse: RabbitResponse, map: java.util.Map[String, AnyRef]) extends RabbitResponse
+case class RabbitException(throwable:Throwable) extends RabbitResponse
+
 
 object ConnectionService {
 
@@ -51,7 +57,40 @@ object ConnectionService {
     bindQueueToExchange(queueName, exchangeName, routingKey)
 
     Cxn(getFilename(config), () => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
+
   }
+
+
+
+  def newInit(config: Config, ifCreateQueue:Boolean = false): Cxn = {
+    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
+
+    val queueName = readQueue(config)
+    val exchangeName = readExchange(config)
+    val routingKey = readRoutingKey(config)
+    if (ifCreateQueue) {
+      createQueue(queueName)
+    }
+    bindQueueToExchange(queueName, exchangeName, routingKey)
+
+    Cxn("", () => RabbitConnection.newNextPayload(queueName), () => RabbitConnection.disconnect)
+  }
+
+
+  def subscribe(config: Config): Sxn = {
+    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
+
+    val queueName = readQueue(config)
+    val exchangeName = readExchange(config)
+    val routingKey = readRoutingKey(config)
+
+    bindQueueToExchange(queueName, exchangeName, routingKey)
+
+    Sxn(RabbitConnection.registerListener(queueName), ()=>RabbitConnection.disconnect)
+  }
+
+
+
 
   def done(config: Config): Unit = {
     val queueName = readQueue(config)

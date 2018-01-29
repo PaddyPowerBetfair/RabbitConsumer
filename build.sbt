@@ -55,6 +55,11 @@ val mockito = Seq (
   "org.mockito" % "mockito-core" % mockitoV % "test"
 )
 
+
+publishTo := Some(Resolver.file("file",  new File(System.getenv("M2_REPO"))))
+
+
+
 libraryDependencies ++= logging ++ scalacheck ++ scalatest ++ amqpClient ++ scalaz ++ argonaut ++ typesafeConfig ++ mockito
 
 lazy val root = (project in file("."))
