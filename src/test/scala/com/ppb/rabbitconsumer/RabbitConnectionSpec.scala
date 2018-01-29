@@ -88,7 +88,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
 
     val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
-    message shouldBe a[RabbitMessage]
+    message shouldBe a[RabbitJsonMessage]
   }
 
   it should "return a NoMoreMessages object from the RabbitMq Broker when no payload is available" in {
