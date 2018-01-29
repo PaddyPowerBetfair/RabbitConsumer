@@ -55,8 +55,8 @@ val mockito = Seq (
   "org.mockito" % "mockito-core" % mockitoV % "test"
 )
 
-
-publishTo := Some(Resolver.file("file",  new File(System.getenv("M2_REPO"))))
+// profile to use for local build only
+//publishTo := Some(Resolver.file("file",  new File(System.getenv("M2_REPO"))))
 
 
 
