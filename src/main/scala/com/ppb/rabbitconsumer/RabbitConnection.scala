@@ -17,10 +17,10 @@ sealed trait MessageParser {  def msgParser(load:Array[Byte]):Try[RabbitResponse
 
 case object PlainMessageParser extends MessageParser {
   override def msgParser(load: Array[Byte]): Try[RabbitResponse] = {
-      new String(load, "UTF-8") match {
-        case null => Failure(new Exception("Null Payload"))
-        case (text) => Success(RabbitPlainMessage(text))
-      }
+    Option(new String(load, "UTF-8")) match {
+      case None => Failure(new IllegalArgumentException("payload is null"))
+      case Some(text) => Success(RabbitPlainMessage(text))
+    }
   }
 }
 

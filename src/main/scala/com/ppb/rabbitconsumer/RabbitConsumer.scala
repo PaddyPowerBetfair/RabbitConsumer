@@ -66,14 +66,14 @@ object RabbitConsumer {
 
 
   def getMessagesWithPreamble(nextMessage: () => RabbitResponse): Process0[String] =
-            Process(jsonPreamble) ++ getMessages(nextMessage) ++ Process(jsonPostamble)
+            Process(jsonPreamble) ++ getMessages(nextMessage) ++ Process(jsonPostamble)   //getMessages(nextMessage)
 
 
   def getMessages(nextMessage: () => RabbitResponse): Process0[String] =
-      (receiveAllAny(nextMessage) match  {
+      receiveAllAny(nextMessage) match  {
         case ss:Process0[String] => ss intersperse("\n")
         case kk:Process0[Json] => kk map(_.spaces2) intersperse ","
-      })
+      }
 
 //
 //    Process(jsonPreamble) ++
@@ -89,7 +89,8 @@ object RabbitConsumer {
   def receiveAllAny(nextMessage: () => RabbitResponse): Process0[Any] =
     nextMessage() match {
       case RabbitJsonMessage(json) => Process.emit(json) ++ receiveAllAny(nextMessage)
-      case NoMoreMessages => Process.halt
+     // case NoMoreMessages => Process.halt
       case RabbitPlainMessage(plainPayload) =>  Process.emit(plainPayload) ++ receiveAllAny(nextMessage)
+      case _ => Process.halt
     }
 }

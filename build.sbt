@@ -4,6 +4,8 @@ import Tests._
 
 name := "Rabbit Consumer"
 
+organization := "com.paddypowerbetfair"
+
 version := "0.1"
 
 scalaVersion := "2.12.3"
@@ -55,8 +57,8 @@ val mockito = Seq (
   "org.mockito" % "mockito-core" % mockitoV % "test"
 )
 
-// profile to use for local build only
-//publishTo := Some(Resolver.file("file",  new File(System.getenv("M2_REPO"))))
+// to use for local build only
+publishTo := Some(Resolver.file("file", new File(Resolver.mavenLocal.root)))
 
 
 

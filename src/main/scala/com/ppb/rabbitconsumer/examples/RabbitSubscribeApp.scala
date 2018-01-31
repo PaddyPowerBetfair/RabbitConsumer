@@ -24,10 +24,13 @@ object RabbitSubscribeApp extends App {
               println("Header = "+header)
               rabbitResponse match {
                 case RabbitPlainMessage(message) => println(message)
-                case RabbitJsonMessage(json) => print(json.spaces2)
+                case RabbitJsonMessage(json) => println(json.spaces2)
+                case _ => {}
               }
          }
          case RabbitException(th)=> th.printStackTrace()
+         case NoMoreMessages => {}
+         case _ => {}
        }
 }
 
