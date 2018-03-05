@@ -2,6 +2,7 @@ package com.ppb.rabbitconsumer
 
 import argonaut._
 import Argonaut._
+import com.ppb.rabbitconsumer.RabbitConsumerAlgebra._
 import com.typesafe.config.Config
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
@@ -26,7 +27,7 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
   }
 
   it should "read configuration files" in {
-    val config: Configurations = RabbitConsumer.getConfigs("local")
+    val config: Configurations = RabbitConsumer.getConfigFromResource("local")
     config.name should be ("local")
     config.configs should have size 2
   }
@@ -39,14 +40,13 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
     }
 
     val myMock = mock[MyMock]
-    val getCxn: Config => Cxn = _ => Cxn("", () => NoMoreMessages, () => { myMock.soWasI(); Success(()) })
-
-    val getMessages: Cxn => Process[Task, Unit] = _ => {
+    val getCxn: Config => SingleResponseConnection = _ => SingleResponseConnection(() => NoMoreMessages, () => { myMock.soWasI(); Success(()) })
+    val getMessages: SingleResponseConnection => Process[Task, Unit] = _ => {
       myMock.iWasCalled()
       Process(()).toSource
     }
 
-    val configs: Configurations = RabbitConsumer.getConfigs("local")
+    val configs: Configurations = RabbitConsumer.getConfigFromResource("local")
     RabbitConsumer.consumeMessages(getCxn, getMessages)(configs)
 
     verify(myMock, times(2)).iWasCalled()

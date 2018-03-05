@@ -1,5 +1,6 @@
 package com.ppb.rabbitconsumer
 
+import com.ppb.rabbitconsumer.RabbitConsumerAlgebra._
 import com.rabbitmq.client.AMQP.Queue.{BindOk, DeleteOk}
 import com.rabbitmq.client.impl.AMQImpl.Queue.DeclareOk
 import com.rabbitmq.client.{Channel, Connection}
@@ -87,7 +88,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
 
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
 
-    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
+    val message: RabbitResponse = RabbitConnection.readNextPayload("someQueue", JSONMessageParser)(rabbitConnection)
     message shouldBe a[RabbitJsonMessage]
   }
 
@@ -99,7 +100,7 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
 
     val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
 
-    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
+    val message: RabbitResponse = RabbitConnection.readNextPayload("someQueue")(rabbitConnection)
     message shouldBe NoMoreMessages
   }
 

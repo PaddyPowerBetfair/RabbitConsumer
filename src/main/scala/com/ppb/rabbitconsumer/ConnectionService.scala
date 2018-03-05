@@ -1,21 +1,17 @@
 package com.ppb.rabbitconsumer
 
-import java.io.IOException
-
-import com.rabbitmq.client.{AMQP, ConnectionFactory, Envelope}
-import com.typesafe.config.Config
-import argonaut._
 import com.ppb.rabbitconsumer.ConfigService.{getFilename, readExchange, readQueue, readRoutingKey}
 import com.ppb.rabbitconsumer.RabbitConnection._
+import com.ppb.rabbitconsumer.RabbitConsumerAlgebra.{SingleResponseConnection, SubscriptionConnection}
+import com.rabbitmq.client.ConnectionFactory
+import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
+import scodec.bits.ByteVector
 
+import scalaz.Sink
+import scalaz.concurrent.Task
+import scalaz.stream.{Sink, io, sink}
 
-sealed trait RabbitResponse extends Product with Serializable
-case object NoMoreMessages extends RabbitResponse
-case class RabbitJsonMessage(payload: Json) extends RabbitResponse
-case class RabbitPlainMessage(plainPayload: String) extends RabbitResponse
-case class RabbitMessage(rabbitResponse: RabbitResponse, map: java.util.Map[String, AnyRef]) extends RabbitResponse
-case class RabbitException(throwable:Throwable) extends RabbitResponse
 
 
 object ConnectionService {
@@ -46,47 +42,48 @@ object ConnectionService {
     RabbitConnection(connection, channel, nextMessage)
   }
 
-  def init(config: Config): Cxn = {
-    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
 
+  def createConnection(config: Config) :  SingleResponseConnection = {
+    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
     val queueName = readQueue(config)
     val exchangeName = readExchange(config)
     val routingKey = readRoutingKey(config)
-
-    createQueue(queueName)
     bindQueueToExchange(queueName, exchangeName, routingKey)
 
-    Cxn(getFilename(config), () => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
+   val sink = Option(getFilename(config)) map {
+      fileNameDefined => io.fileChunkW(fileNameDefined)
+    } getOrElse io.stdOutBytes
 
+    SingleResponseConnection(() => RabbitConnection.readNextPayload(queueName), () => RabbitConnection.disconnect, sink)
   }
 
 
 
-  def newInit(config: Config, ifCreateQueue:Boolean = false): Cxn = {
+
+
+
+  //  def init(config: Config, createQueue:Boolean = false, sink:Sink[Task, ByteVector]): SingleResponseConnection = {
+//    createConnection(config, createQueue, sink)
+//  }
+
+
+  def subscribe(config: Config, messageParser:MessageParser = PlainMessageParser): SubscriptionConnection = {
     implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
 
     val queueName = readQueue(config)
     val exchangeName = readExchange(config)
     val routingKey = readRoutingKey(config)
-    if (ifCreateQueue) {
-      createQueue(queueName)
-    }
-    bindQueueToExchange(queueName, exchangeName, routingKey)
-
-    Cxn("", () => RabbitConnection.newNextPayload(queueName), () => RabbitConnection.disconnect)
-  }
-
-
-  def subscribe(config: Config): Sxn = {
-    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
-
-    val queueName = readQueue(config)
-    val exchangeName = readExchange(config)
-    val routingKey = readRoutingKey(config)
+    val fileName = getFilename(config)
 
     bindQueueToExchange(queueName, exchangeName, routingKey)
 
-    Sxn(RabbitConnection.registerListener(queueName), ()=>RabbitConnection.disconnect)
+
+
+    println(" Created a subscription with "+ queueName + "   " +exchangeName+ "  "+ routingKey )
+
+   SubscriptionConnection(RabbitConnection.registerListener(queueName, messageParser), ()=>RabbitConnection.disconnect, Option(fileName))
+
+
   }
 
 

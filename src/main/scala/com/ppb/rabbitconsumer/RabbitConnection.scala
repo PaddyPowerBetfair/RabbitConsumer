@@ -1,16 +1,14 @@
 package com.ppb.rabbitconsumer
 
-import argonaut.Json
+import java.io.IOException
+
+import argonaut.Argonaut._
+import argonaut.{Json, _}
+import com.ppb.rabbitconsumer.RabbitConsumerAlgebra._
 import com.rabbitmq.client._
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
-import argonaut._
-import Argonaut._
-import java.io.IOException
-
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
 
 sealed trait MessageParser {  def msgParser(load:Array[Byte]):Try[RabbitResponse] }
@@ -36,29 +34,6 @@ case object JSONMessageParser extends MessageParser {
 
 
 
-//trait QueueSubscriber {
-//  def subscribeNow(quene: String, consumer: (Array[Byte]) => Unit): Unit;
-//}
-
-//
-//trait QueueSubscriber extends Consumer {
-//  def messageReceived(consumerTag:String, envelop:Envelope, properties:AMQP.BasicProperties, payload:Array[Byte]): Unit;
-//}
-//
-//case class DefaultQueueSubscriber( messageProcessor: (Array[Byte]) => Unit ) extends QueueSubscriber {
-////  def messageReceived(consumerTag: String, envelop: Envelope, properties: AMQP.BasicProperties, payload: Array[Byte]): Unit = {
-////    messageProcessor(payload);
-////  }
-//  //import com.rabbitmq.client.AMQP
-//
-//
-//  @throws[IOException]
-//  def handleDelivery(consumerTag: String, envelop: Envelope, properties: AMQP.BasicProperties, payload: Array[Byte]): Unit = {
-//    messageProcessor(payload);
-//  }
-//
-//}
-
 
 object RabbitConnection {
   def disconnect(implicit rabbitConnection: RabbitConnection): Try[Unit] = {
@@ -80,24 +55,12 @@ object RabbitConnection {
   def deleteQueue(queueName: String)(implicit rabbitConnection: RabbitConnection): Unit =
     rabbitConnection.channel.queueDelete(queueName)
 
+  @Deprecated
   def nextPayload(queueName: String)(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
-    val response = for {
-      message <- Try(rabbitConnection.nextMessage())
-      json    <- asJson(message)
-    } yield RabbitJsonMessage(json)
-
-    response match {
-      case Success(msg) => msg
-      case Failure(th) => NoMoreMessages
-    }
+     readNextPayload(queueName , JSONMessageParser)
   }
 
-//  def subscribe(queueName: String, consumer:Consumer) (implicit rabbitConnection: RabbitConnection): Unit = {
-//              rabbitConnection.channel.basicConsume(queueName, false, consumer)
-//  }
-
-
-  def newNextPayload(queueName: String, messageParser: MessageParser = PlainMessageParser )(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
+  def readNextPayload(queueName: String, messageParser: MessageParser = PlainMessageParser )(implicit rabbitConnection: RabbitConnection): RabbitResponse = {
 
     val response = for {
       message <- Try(rabbitConnection.nextMessage())
@@ -110,28 +73,44 @@ object RabbitConnection {
     }
   }
 
+  implicit class ScalaHeaderProperties(properties: BasicProperties) {
+    def headerAsScalaMap: Map[String, AnyRef] = {
+      Option(properties.getHeaders) map { props =>
+        props.asScala.toMap[String, AnyRef]
+      } getOrElse Map.empty[String, AnyRef]
+    }
+  }
 
-  // Function takes queueName, messageParser and returns a function which takes in a callback and return nothing.
-  // Return function will be invoked by the consumer registering a callbackFunction
-  // when message is received 'handleDelivery' is invoked which starts a future which will parse message and pass it callback function on complete
-  def registerListener(queueName:String, messageParser: MessageParser = PlainMessageParser)(implicit rabbitConnection: RabbitConnection):  ((Try[RabbitResponse] => Unit) => String) = {
+  /**
+    * Function to register to queue for message notification. This method will subscribe to queue, will consume when
+    * message arrives in queue
+    * @param queueName
+    * @param messageParser  : Custom Parser of type MessageParse
+    * @param rabbitConnection
+    * @return : A function Holder of type parameter 'OnReceive' returns String.
+    */
+  def registerListener(queueName:String, messageParser: MessageParser = PlainMessageParser)(implicit rabbitConnection: RabbitConnection): (OnReceive) => String = {
 
-      val definedConsumer: (Try[RabbitResponse] => Unit) => String = (callbackFun) => {
+      val definedConsumer:OnReceive => String = (callbackFun) => {
         rabbitConnection.channel.basicConsume(queueName, false, new DefaultConsumer(rabbitConnection.channel) {
 
-            @throws(classOf[IOException])
-            override def handleDelivery(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: Array[Byte]): Unit = {
-              Future {
-                  messageParser.msgParser(body) match {
-                    case Failure(th) => RabbitException(th)
-                    case Success(rabbitResponse) => RabbitMessage(rabbitResponse, properties.getHeaders)
-                }
-              }.onComplete(callbackFun)
+          @throws(classOf[IOException])
+          override def handleDelivery(consumerTag: String,
+                                      envelope: Envelope,
+                                      properties: AMQP.BasicProperties,
+                                      body: Array[Byte]): Unit = {
+
+              callbackFun(properties.getTimestamp, queueName, messageParser.msgParser(body), properties.headerAsScalaMap)
             } // end handle
-          }) // end consume
+          }) // end define consume
       }
       definedConsumer
   }
+
+
+//  def publish(queueName:String, routingKey:String, message:String)(implicit  rabbitConnection: RabbitConnection):Unit = {
+//    rabbitConnection.channel.basicPublish("", queueName, null, message.getBytes())
+//  }
 
   def asJson(payload: Array[Byte]): Try[Json] =
     new String(payload, "UTF-8").parse match {
