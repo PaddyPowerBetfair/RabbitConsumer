@@ -18,9 +18,8 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "create an exchange on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel)
     RabbitConnection.createExchange("exchange")(rabbitConnection)
 
     verify(channel, times(1)).exchangeDeclarePassive("exchange")
@@ -29,30 +28,27 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "create a queue on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
 
     when(channel.queueDeclare("queue", true, false, false, Map.empty[String, AnyRef].asJava)).thenReturn(mock[DeclareOk])
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel)
     RabbitConnection.createQueue("queue")(rabbitConnection)
   }
 
   it should "bind a queue to an exchange on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
 
     when(channel.queueBind("queue", "exchange", "routingKey")).thenReturn(mock[BindOk])
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel)
     RabbitConnection.bindQueueToExchange("queue", "exchange", "routingKey")(rabbitConnection)
   }
 
   it should "delete a queue on the RabbitMq Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
 
     when(channel.queueDelete("queue")).thenReturn(mock[DeleteOk])
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel)
     RabbitConnection.deleteQueue("queue")(rabbitConnection)
   }
 
@@ -70,9 +66,8 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   it should "disconnect from RabbitMQ Broker" in {
     val connection = mock[Connection]
     val channel = mock[Channel]
-    val nextMessage = () => Array.empty[Byte]
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+    val rabbitConnection = RabbitConnection(connection, channel)
     RabbitConnection.disconnect(rabbitConnection) should be (Success(()))
 
     verify(channel, times(1)).close()
@@ -80,26 +75,26 @@ class RabbitConnectionSpec extends FlatSpec with Matchers with MockitoSugar {
   }
 
   it should "return a valid Message object from the RabbitMq Broker when a payload is available" in {
-    val connection = mock[Connection]
-    val channel = mock[Channel]
+//    val connection = mock[Connection]
+//    val channel = mock[Channel]
 
     val nextMessage = () => """{ "key": "value" }""".getBytes
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+//    val rabbitConnection = RabbitConnection(connection, channel)
 
-    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
+    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(nextMessage)
     message shouldBe a[RabbitMessage]
   }
 
   it should "return a NoMoreMessages object from the RabbitMq Broker when no payload is available" in {
-    val connection = mock[Connection]
-    val channel = mock[Channel]
+//    val connection = mock[Connection]
+//    val channel = mock[Channel]
 
     val nextMessage = () => throw new IllegalStateException("No more messages")
 
-    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
+//    val rabbitConnection = RabbitConnection(connection, channel, nextMessage)
 
-    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(rabbitConnection)
+    val message: RabbitResponse = RabbitConnection.nextPayload("someQueue")(nextMessage)
     message shouldBe NoMoreMessages
   }
 

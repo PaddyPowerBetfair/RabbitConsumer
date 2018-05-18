@@ -2,11 +2,13 @@ package com.ppb.rabbitconsumer
 
 import com.rabbitmq.client.ConnectionFactory
 import com.typesafe.config.Config
-
 import argonaut._
-import com.ppb.rabbitconsumer.ConfigService.{getFilename, readExchange, readQueue, readRoutingKey}
+import com.ppb.rabbitconsumer.ConfigService._
 import com.ppb.rabbitconsumer.RabbitConnection._
+import com.rabbitmq.client.AMQP.BasicProperties
 import org.slf4j.LoggerFactory
+
+import scala.collection.JavaConverters._
 
 sealed trait RabbitResponse extends Product with Serializable
 case object NoMoreMessages extends RabbitResponse
@@ -33,15 +35,11 @@ object ConnectionService {
     val connection = connectionFactory(config).newConnection()
     val channel    = connection.createChannel()
 
-    val nextMessage: () => Array[Byte] = () => {
-      channel.basicGet(readQueue(config), false).getBody
-    }
-
-    RabbitConnection(connection, channel, nextMessage)
+    RabbitConnection(connection, channel)
   }
 
-  def init(config: Config): Cxn = {
-    implicit val rabbitConnnection: RabbitConnection = rabbitConnection(config)
+  def init(headers: Map[String, AnyRef])(config: Config): Cxn = {
+    implicit val rabbitCxn: RabbitConnection = rabbitConnection(config)
 
     val queueName = readQueue(config)
     val exchangeName = readExchange(config)
@@ -50,7 +48,21 @@ object ConnectionService {
     createQueue(queueName)
     bindQueueToExchange(queueName, exchangeName, routingKey)
 
-    Cxn(getFilename(config), () => RabbitConnection.nextPayload(queueName), () => RabbitConnection.disconnect)
+    val consumeNext: () => Array[Byte] = () => {
+      rabbitCxn.channel.basicGet(readQueue(config), false).getBody
+    }
+
+    def publishNext(headers: Map[String, AnyRef])(payload: String): Unit = {
+      rabbitCxn.channel.basicPublish(exchangeName, routingKey, new BasicProperties.Builder().headers(headers.asJava).build(), payload.getBytes)
+    }
+
+    Cxn(
+      getInputFilename(config),
+      getOutputFilename(config),
+      () => RabbitConnection.nextPayload(queueName)(consumeNext),
+      publishNext(headers),
+      () => RabbitConnection.disconnect
+    )
   }
 
   def done(config: Config): Unit = {

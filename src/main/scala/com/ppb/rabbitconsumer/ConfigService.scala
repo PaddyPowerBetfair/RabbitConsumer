@@ -6,6 +6,8 @@ object ConfigService {
   def readExchange(config: Config): String = config.getString("exchangeName")
   def readQueue(config: Config): String = config.getString("queue")
   def readRoutingKey(config: Config): String = config.getString("routingKey")
-  def getFilename(config: Config): String =
-    config.getString("fileName").replaceFirst("^~", System.getProperty("user.home"))
+  def getInputFilename(config: Config): String =
+    config.getString("input").replaceFirst("^~", System.getProperty("user.home"))
+  def getOutputFilename(config: Config): String =
+    config.getString("output").replaceFirst("^~", System.getProperty("user.home"))
 }

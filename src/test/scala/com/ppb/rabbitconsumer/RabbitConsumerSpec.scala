@@ -39,7 +39,7 @@ class RabbitConsumerSpec extends FlatSpec with Matchers with MockitoSugar {
     }
 
     val myMock = mock[MyMock]
-    val getCxn: Config => Cxn = _ => Cxn("", () => NoMoreMessages, () => { myMock.soWasI(); Success(()) })
+    val getCxn: Config => Cxn = _ => Cxn("", "", () => NoMoreMessages, _ => (), () => { myMock.soWasI(); Success(()) })
 
     val getMessages: Cxn => Process[Task, Unit] = _ => {
       myMock.iWasCalled()

@@ -10,7 +10,7 @@ import scala.util.Try
 import scalaz.concurrent.Task
 import scalaz.stream._
 
-case class Cxn(filename: String, nextMessage: () => RabbitResponse, disconnect: () => Try[Unit])
+case class Cxn(inputFilename: String, outputFilename: String, nextMessage: () => RabbitResponse, publish: String => Unit, disconnect: () => Try[Unit])
 
 case class Configurations(name: String, configs: List[Config])
 
@@ -32,9 +32,9 @@ object RabbitConsumer {
   }
 
   val getMessagesPerConnection: Cxn => Process[Task, Unit] = cxn =>
-    getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.filename)
+    getMessages(cxn.nextMessage).toSource pipe text.utf8Encode to io.fileChunkW(cxn.outputFilename)
 
-  val read: (String) => Unit =  getConfigs _ andThen consumeMessages(ConnectionService.init, getMessagesPerConnection)
+  val read: (String) => Unit =  getConfigs _ andThen consumeMessages(ConnectionService.init(Map.empty), getMessagesPerConnection)
 
   def consumeMessages(getCxn: Config => Cxn, getMessages: Cxn => Process[Task, Unit])(c: Configurations): Unit = {
     c.configs.map(getCxn) foreach { cxn => {
