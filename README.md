@@ -4,47 +4,27 @@
 This is a simple utility for reading json payloads that are published to a RabbitMQ Exchange and then writing them to a text file as valid json.
 
 ## How do I use it?
-This utility is driven by config files located in ```src/main/resources``` and is run from within an ```sbt console```.
-
-For example, if ```src/main/resources/sample.json``` contains the following json
+This utility is driven by command line arguments. Type `sbt "run --help"` to see them.
 ```
-amqp {
-  connections = [
-    {
-      ip           = "127.0.0.1"
-      port         = 5672
-      user         = "guest"
-      password     = "guest"
-      useSSL       = false
-      exchangeName = "myExchange"
-      queue        = "myQueue"
-      routingKey   = ""
-      fileName     = "~/output.json"
-    }
-  ]
-}
+[info] Running com.ppb.rabbitconsumer.Main --help
+      --host  <arg>
+      --password  <arg>
+      --port  <arg>
+      --pretty
+      --timeout  <arg>
+      --use-ssl
+      --username  <arg>
+  -h, --help              Show help message
+
+ trailing arguments:
+  exchange (required)
+  routingKey (required)
+  file-name (required)
 ```
 
-then ```R.read("sample")``` will read all json messages from the specified Queue and write them all to file.
-
-By default, ```local.conf``` is provided.
-
-You may add your own conf files.  E.g. If you create ```myConf.conf``` then you may use it by calling ```R.read("myConf")```.
-
-When you call```R.read("myConf")``` (for example), a queue is bound to the specified Exchange.
-
-When you are done, make sure you call ```R.done("myConf")``` to delete the queues which were bound to the Exchange.
+For example, to consume from exchange **exchange** with routing key **routingKey** and to save results to the **out.json**, simply type `sbt "run exchange routingKey out.json"`. To stop the process, press CTRL+C (SIGINT signal). 
 
 
-### Usage
-```
-$ sbt
-$ console
-$ R.local           
-$ R.read("myconf")
-$ R.done("myconf")
-$ R.done("local")
-```
 ### Integration Test Support
 
 Place the Integration Test files files to src/it/scala folder. 
